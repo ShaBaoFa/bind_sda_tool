@@ -16,10 +16,6 @@
 account:password:demo@outlook.com:mail_password
 ```
 
-```bash
-    python win_main.py
-```
-
 ## feature
 
 |   功能   |               说明               |
