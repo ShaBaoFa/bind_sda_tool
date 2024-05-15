@@ -2,7 +2,6 @@
 
 ![Static Badge](https://img.shields.io/badge/v3.10.*-blue?style=flat&logo=python&logoColor=white&labelColor=gray)
 
-
 ## install
 
 ```bash
@@ -34,3 +33,8 @@ account:password:demo@outlook.com:mail_password
 ## changelog 
 
 - 绑定SDA
+
+## 说明
+将来提供更多的功能，敬请期待
+会打包exe以及dmg
+```
