@@ -37,4 +37,4 @@ account:password:demo@outlook.com:mail_password
 ## 说明
 将来提供更多的功能，敬请期待
 会打包exe以及dmg
-```
+
