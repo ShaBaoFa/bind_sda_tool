@@ -224,10 +224,6 @@ class Ui_MainWindow(QMainWindow, Ui_task_MainWindow):
         invertSelectionAction = menu.addAction("反选")
         invertSelectionAction.triggered.connect(self.invertSelection)
 
-        # 选中掉落数量大于0的账户
-        invertSelectionAction = menu.addAction("选中掉落数量大于0的账户")
-        invertSelectionAction.triggered.connect(self.select_num_gt_0)
-
         # 添加删除选中行动作
         deleteSelectedAction = menu.addAction("删除选中行")
         deleteSelectedAction.triggered.connect(self.deleteSelectedRows)
@@ -242,14 +238,6 @@ class Ui_MainWindow(QMainWindow, Ui_task_MainWindow):
     def selectAll(self):
         for i in range(self.accTable.rowCount()):
             self.accTable.item(i, 0).setCheckState(Qt.Checked)
-
-    def select_num_gt_0(self):
-        for i in range(self.accTable.rowCount()):
-            num = self.get_table_item(i, 7)
-            if num and int(num) > 0:
-                self.accTable.item(i, 0).setCheckState(Qt.Checked)
-            else:
-                self.accTable.item(i, 0).setCheckState(Qt.Unchecked)
 
     def invertSelection(self):
         for i in range(self.accTable.rowCount()):
@@ -268,7 +256,7 @@ class Ui_MainWindow(QMainWindow, Ui_task_MainWindow):
         # 创建一个工作簿
         workbook = Workbook()
         sheet = workbook.active
-        column_titles = ['账户', '密码', '邮箱', '邮箱密码', '最近掉落', '掉落数量', '掉落日期', '掉落价格']
+        column_titles = ['账户', '密码', '邮箱', '邮箱密码', '救援码']
         sheet.append(column_titles)  # 将列标题添加到第一行
         # 遍历表格的每一行
         for i in range(self.accTable.rowCount()):
