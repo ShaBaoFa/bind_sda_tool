@@ -48,7 +48,11 @@ class Worker(QThread, QObject):
         self.update_table_item_request.emit(self.row_index, 5, '开始绑定')
         # 先获取邮箱当前邮件数,方便获取差值
         self.acc.mail = SteamMail('outlook.office365.com', self.acc.username,self.acc.email,self.acc.email_pwd)
-        self.acc.mail.set_last_email_count()
+        try:
+            self.acc.mail.set_last_email_count()
+        except Exception as e:
+            self.update_table_item_request.emit(self.row_index, 5, '连接邮箱失败')
+            return
         self.acc.add_authenticator()
         self.update_table_item_request.emit(self.row_index, 5, '获取邮箱验证码')
         success, verification_code = self.acc.get_mail_code()
@@ -66,10 +70,12 @@ class Worker(QThread, QObject):
 
     def login_task(self, account, password, email, email_pwd, row_index):
         self.acc = SteamAuth(account, password, email, email_pwd)
+        # 先获取邮箱当前邮件数,方便获取差值
         rsa_state, rsa_re = self.acc.get_rsa_public_key()
         if rsa_state:
             encode_password = self.acc.rsa_encrypt(rsa_re.publickey_mod, rsa_re.publickey_exp)
             send_state, send_re = self.acc.send_encode_request(encode_password, rsa_re.timestamp)
+            print(f'{send_re}')
             if send_state:
                 if len(send_re.allowed_confirmations) > 0:
                     if send_re.allowed_confirmations[0].confirmation_type == 1:
@@ -80,6 +86,24 @@ class Worker(QThread, QObject):
                         else:
                             self.update_table_item_request.emit(row_index, 5, '登陆失败')
                             return False
+                    if send_re.allowed_confirmations[0].confirmation_type == 2:
+                        self.update_table_item_request.emit(self.row_index, 5, '获取邮箱验证码...')
+                        success, verification_code = self.acc.get_mail_code()
+                        if not success:
+                            self.update_table_item_request.emit(self.row_index, 5, '获取邮箱验证码失败')
+                            return False
+                        print(f'获取到的邮箱验证码: {verification_code}')
+                        self.update_table_item_request.emit(self.row_index, 5, '登陆中.....')
+                        success = self.acc.auth_code(code=verification_code,code_type=2)
+                        if success:
+                            token_state = self.acc.get_token()
+                            if token_state:
+                                self.update_table_item_request.emit(row_index, 1, '登录成功')
+                                return True
+                            else:
+                                self.update_table_item_request.emit(row_index, 1, '登陆失败')
+                                return False
+                        return False
             else:
                 self.update_table_item_request.emit(row_index, 5, '登陆失败')
                 return False
@@ -124,7 +148,7 @@ class Ui_MainWindow(QMainWindow, Ui_task_MainWindow):
                     checkBoxItem = QtWidgets.QTableWidgetItem()
                     checkBoxItem.setCheckState(QtCore.Qt.Unchecked)
                     self.accTable.setItem(rowIndex, 0, checkBoxItem)
-                    items = line.strip().split(':')
+                    items = line.strip().split('----')
                     for columnIndex, item in enumerate(items):
                         if columnIndex < self.accTable.columnCount() and columnIndex < 4:
                             self.accTable.setItem(rowIndex, columnIndex + 1, QtWidgets.QTableWidgetItem(item))
@@ -149,6 +173,7 @@ class Ui_MainWindow(QMainWindow, Ui_task_MainWindow):
             self.threadList.clear()
             rowCount = self.accTable.rowCount()
             for rowIndex in range(rowCount):
+                print(f'rowIndex: {rowIndex}')
                 account = self.accTable.item(rowIndex, 1).text()
                 password = self.accTable.item(rowIndex, 2).text()
                 email = self.accTable.item(rowIndex, 3).text()

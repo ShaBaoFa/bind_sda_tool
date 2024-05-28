@@ -132,6 +132,7 @@ class SteamAuth:
         device_msg = device_details(
             device_friendly_name=self.ua,
             platform_type=2,
+            os_type=int(-700)
         )
         message = LoginRequest(
             account_name=self.username,
@@ -168,12 +169,12 @@ class SteamAuth:
     验证验证码
     '''
 
-    def auth_code(self, code):
+    def auth_code(self, code,code_type=3):
         message = UpdateAuthSessionWithSteamGuardCode(
             client_id=self.client_id,
             steamId=self.steam_id,
             code=code,
-            code_type=3,
+            code_type=code_type,
         )
         protobuf = self.generator_protobuf(message)
         url = f'https://api.steampowered.com/IAuthenticationService/UpdateAuthSessionWithSteamGuardCode/v1'
@@ -340,3 +341,36 @@ class SteamAuth:
     def get_mail_code(self):
         code = self.mail.get_steam_code()
         return True, code
+
+    def jwt_checkdevice(self):
+        url = f'https://login.steampowered.com/jwt/checkdevice/{self.steam_id}'
+        cookies = {
+            'sessionid': str(self.session_id),
+            'steamid': str(self.steam_id),
+            'browserid': str(self.browser_id),
+            'timezoneOffset': '28800,0',
+            'steamCountry': 'CN%7C65c6e647746973917498bae6bced5fb9'
+        }
+        headers = {
+            'user-agent': self.ua,
+            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+        }
+        params = {
+            "steamid": str(self.steam_id),
+            "clientid": str(self.client_id)
+        }
+        attempt = 0
+        max_attempts = 5
+
+        while attempt < max_attempts:
+            try:
+                response = self.session.post(url, params=params, cookies=cookies, headers=headers, timeout=3)
+                print(response.content)
+                return True
+            except RequestException as e:
+                attempt += 1
+                logging.error(f"Function : jwt_checkdevice ,Attempt {attempt} failed with exception: {e}")
+                if attempt == max_attempts:
+                    # 最后一次尝试失败，返回False和异常信息
+                    return False, str(e)
+
